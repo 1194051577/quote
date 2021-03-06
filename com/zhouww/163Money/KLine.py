@@ -1,7 +1,6 @@
 import requests
 import os
 import json
-import time
 
 # 下载k线数据
 def downloadKLineData(companyName, companyCode):
@@ -52,7 +51,7 @@ def downloadKLineDataByCode(prefix, companyCode, start, end):
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
         "Referer": "http://quotes.money.163.com/"
     }
-    fileName = str(companyCode) + "_20210330.xls"
+    fileName = str(companyCode) + "_20210330.csv"
     saveFilePath = execlDir + "/" + fileName
     if os.path.exists(saveFilePath):
         return
@@ -65,13 +64,17 @@ def downloadAllCompany():
     companyArr = readCompanyInfo()
     idx = 1
     for company in companyArr:
-        try :
-            print("下载中=" + str(company["companyCode"]) + ", idx=" + str(idx))
-            downloadKLineData(None, company["companyCode"])
-            print("完成下载code=" + str(company["companyCode"]) + ", idx=" + str(idx))
-        except BaseException:
-            print("下载失败code=" + str(company["companyCode"]) + ", idx=" + str(idx))
+        print("下载中=" + str(company["companyCode"]) + ", idx=" + str(idx))
+        downloadKLineData(None, company["companyCode"])
+        print("完成下载code=" + str(company["companyCode"]) + ", idx=" + str(idx))
         idx = idx + 1
+        # try :
+        #     print("下载中=" + str(company["companyCode"]) + ", idx=" + str(idx))
+        #     downloadKLineData(None, company["companyCode"])
+        #     print("完成下载code=" + str(company["companyCode"]) + ", idx=" + str(idx))
+        # except BaseException:
+        #     print("下载失败code=" + str(company["companyCode"]) + ", idx=" + str(idx))
+        # idx = idx + 1
 
 def readCompanyInfo():
     rootDir = "/Users/zhouweiwei/PycharmProjects/quote/com/zhouww/easyMoney"
@@ -81,23 +84,4 @@ def readCompanyInfo():
     with open(companyFile, mode='r') as companyReadFile:
         companyJsonStr = companyReadFile.read()
     return json.loads(companyJsonStr)
-
-
-# downloadAllCompany()
-def renameAllFile():
-    execlDir = "/Users/zhouweiwei/PycharmProjects/quote/com/zhouww/163Money/execl"
-    list = os.listdir(execlDir)  # 列出文件夹下所有的目录与文件
-    for fileName in list:
-        path = os.path.join(execlDir, fileName)
-        if os.path.isfile(path):
-            ridx = fileName.rindex(".")
-            newFileName = fileName[0:ridx] + ".csv"
-            oFile = execlDir + "/" + fileName
-            nFile = execlDir + "/" + newFileName
-            os.rename(oFile, nFile)
-
-
-execlDir = "/Users/zhouweiwei/PycharmProjects/quote/com/zhouww/163Money/execl"
-list = os.listdir(execlDir)  # 列出文件夹下所有的目录与文件
-print(len(list))
 
