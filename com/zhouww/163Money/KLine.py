@@ -40,8 +40,8 @@ def getCompany(companyName, companyCode):
             return company
 
 
-# 下载股票历史数据 】
-# TODO 日期作为参数传入
+# 下载股票历史数据
+# prefix 沪为0 深为1
 def downloadKLineDataByCode(prefix, companyCode, start, end):
     resultCompanyCode = str(prefix) + str(companyCode)
     downloadFileUrl = "http://quotes.money.163.com/service/chddata.html?code={}&start={}&end={}&fields=TCLOSE;HIGH;LOW;TOPEN;LCLOSE;CHG;PCHG;TURNOVER;VOTURNOVER;VATURNOVER;TCAP;MCAP".format(resultCompanyCode, start, end)
