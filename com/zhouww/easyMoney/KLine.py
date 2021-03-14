@@ -24,19 +24,24 @@ class KLine:
         kLineType_15 : "15",
         kLineType_30 : "30",
         kLineType_60 : "60"
-
     }
 
-    def downloadYear(self, companyCode, kLineType="day", year="init"):
+    fqtMap = {
+        "前复权" : "1",
+        "后复权" : "2",
+        "不复权" : "0"
+    }
+
+    def downloadYear(self, companyCode, kLineType="day", year="init", fqType="前复权"):
         if "init" == year or len(str(year)) != 4:
             now = datetime.datetime.now()
             year = now.year
 
         startDate = str(year) + "0101"
         endDate = str(year) + "1231"
-        return self.downloadKLine(companyCode=companyCode, startDate=startDate, endDate=endDate, kLineType=kLineType)
+        return self.downloadKLine(companyCode=companyCode, startDate=startDate, endDate=endDate, kLineType=kLineType, fqType=fqType)
 
-    def downloadMonth(self, companyCode, kLineType="day", yearMonth="init"):
+    def downloadMonth(self, companyCode, kLineType="day", yearMonth="init", fqType="前复权"):
         if "init" == yearMonth or len(str(yearMonth)) != 6:
             now = datetime.datetime.now()
             year = now.year
@@ -49,16 +54,16 @@ class KLine:
 
         startDate = datetime.datetime(year=year, month=month, day=1).strftime("%Y%m%d")
         endDate = datetime.datetime(year=year, month=month, day=dayRangeArr[1]).strftime("%Y%m%d")
-        return self.downloadKLine(companyCode=companyCode, startDate=startDate, endDate=endDate, kLineType=kLineType)
+        return self.downloadKLine(companyCode=companyCode, startDate=startDate, endDate=endDate, kLineType=kLineType, fqType=fqType)
 
-    def downloadDay(self, companyCode, kLineType="day", yearMonthDay = "init"):
+    def downloadDay(self, companyCode, kLineType="day", yearMonthDay = "init", fqType="前复权"):
         if "init" == yearMonthDay or len(str(yearMonthDay)) != 8:
             now = datetime.datetime.now()
             yearMonthDay = now.strftime("%Y%m%d")
 
-        return self.downloadKLine(companyCode=companyCode, startDate=yearMonthDay, endDate=yearMonthDay, kLineType=kLineType)
+        return self.downloadKLine(companyCode=companyCode, startDate=yearMonthDay, endDate=yearMonthDay, kLineType=kLineType, fqType=fqType)
 
-    def downloadDayRange(self, companyCode, startYearMonthDay, endYearMonthDay="init", kLineType="day"):
+    def downloadDayRange(self, companyCode, startYearMonthDay, endYearMonthDay="init", kLineType="day", fqType="前复权"):
         if "init" == startYearMonthDay or len(str(startYearMonthDay)) != 8:
             now = datetime.datetime.now()
             startYearMonthDay = now.strftime("%Y%m%d")
@@ -66,10 +71,10 @@ class KLine:
         if "init" == endYearMonthDay or len(str(endYearMonthDay)) != 8:
             now = datetime.datetime.now()
             endYearMonthDay = now.strftime("%Y%m%d")
-        return self.downloadKLine(companyCode=companyCode, startDate=startYearMonthDay, endDate=endYearMonthDay, kLineType=kLineType)
+        return self.downloadKLine(companyCode=companyCode, startDate=startYearMonthDay, endDate=endYearMonthDay, kLineType=kLineType, fqType=fqType)
 
 
-    def downloadKLine(self, companyCode, startDate, endDate, kLineType="day", resultFilePath="init", kLinePrefix="init"):
+    def downloadKLine(self, companyCode, startDate, endDate, kLineType="day", resultFilePath="init", kLinePrefix="init", fqType="前复权"):
         if "init" == kLinePrefix:
             companyInfo = self.getCompany(None, companyCode)
             kLinePrefix = companyInfo["kLinePrefix"]
@@ -79,10 +84,12 @@ class KLine:
             resultFilePath = projectRootDir + "/ResultKLine.csv"
 
         klt = self.kltMap[kLineType]
+        fqt = self.fqtMap[fqType]
 
         kLineUrl = "http://51.push2his.eastmoney.com/api/qt/stock/kline/get?cb=jQuery112401951851412976897_1615119901825&secid="  + str(kLinePrefix) + "." + str(companyCode) \
                    +  "&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=" + str(klt) \
-                   + "&fqt=1&beg=" + startDate \
+                   + "&fqt=" + str(fqt) \
+                   + "&beg=" + startDate \
                    + "&end=" + endDate \
                    + "&smplmt=460&lmt=1000000&_=1615119901851"
 
@@ -173,6 +180,6 @@ kline = KLine()
 # print(kline.downloadDay(companyCode="600460", yearMonthDay="20210203"))
 # print(kline.downloadMonth(companyCode="600460", yearMonth="202103"))
 # print(kline.downloadYear(companyCode="600460", year="2021"))
-print(kline.downloadDayRange(companyCode="600460", startYearMonthDay="20210205", endYearMonthDay="20210312"))
+print(kline.downloadDayRange(companyCode="600460", startYearMonthDay="20210205", endYearMonthDay="20210312", fqType="后复权"))
 
 
