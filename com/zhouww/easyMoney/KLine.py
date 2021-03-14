@@ -3,6 +3,7 @@ import os
 import json
 import calendar
 import datetime
+import csv
 
 import com.zhouww.easyMoney.DownloadCompanyInfo as dci
 
@@ -75,7 +76,7 @@ class KLine:
 
         if "init" == resultFilePath:
             projectRootDir = os.path.dirname(os.path.realpath(__file__))
-            resultFilePath = projectRootDir + "/ResultKLine.json"
+            resultFilePath = projectRootDir + "/ResultKLine.csv"
 
         klt = self.kltMap[kLineType]
 
@@ -91,13 +92,46 @@ class KLine:
         }
         companyResponse = requests.get(kLineUrl, headers=headers)
         companyResponseText = companyResponse.text
+
+        projectRootDir = os.path.dirname(os.path.realpath(__file__))
+        originKLineDataPath = projectRootDir + "/originKLineData.txt"
+        with open(originKLineDataPath, "w") as file:
+            file.write(companyResponseText)
+
         textStartIdx = companyResponseText.find("(")
         textEndIdx = companyResponseText.rfind(")")
         companyJson = companyResponseText[textStartIdx+1:textEndIdx]
-        with open(resultFilePath, "w") as file:
-            file.write(companyJson)
+        companyJsonObj = json.loads(s=companyJson, encoding="UTF-8")
+        dataObj = companyJsonObj["data"]
+        if dataObj == None:
+            return
+        klines = dataObj["klines"]
+        if klines == None:
+            return
 
-        return companyJson
+        resultList = [];
+        with open(resultFilePath, "w") as file:
+            csvWriter = csv.writer(file)
+            csvWriter.writerow(["日期", "开盘", "收盘", "最高", "最低", "成交量", "成交额", "振幅", "涨跌幅", "涨跌额", "换手率"])
+            for lineStr in klines:
+                lineSplits = lineStr.split(",")
+                lineResult = {
+                    "riqi" : lineSplits[0],
+                    "kaipan": lineSplits[1],
+                    "shoupan": lineSplits[2],
+                    "zuigao": lineSplits[3],
+                    "zuidi": lineSplits[4],
+                    "chengjiaoliang": lineSplits[5],
+                    "chengjiaoe": lineSplits[6],
+                    "zhenfu": lineSplits[7],
+                    "zhangdiefu": lineSplits[8],
+                    "zhangdiee": lineSplits[9],
+                    "huanshoulv": lineSplits[10]
+                }
+                resultList.append(lineResult)
+                csvWriter.writerow([lineSplits[0], lineSplits[1], lineSplits[2], lineSplits[3], lineSplits[4], lineSplits[5], lineSplits[6], lineSplits[7], lineSplits[8], lineSplits[9], lineSplits[10]])
+
+        return resultList
 
     # 获取上市公司信息
     #           {
@@ -129,6 +163,10 @@ class KLine:
         with open(companyFile, mode='r') as companyReadFile:
             companyJsonStr = companyReadFile.read()
         return json.loads(companyJsonStr)
+
+    def saveKlineData(self, kLineDataArr):
+        pass
+
 
 
 kline = KLine()
