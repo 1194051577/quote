@@ -48,6 +48,4 @@ def queryCompanyInfo(tagName):
         file.write(json.dumps(content))
 
 
-queryCompanyInfo("hushenAGu")
-
 

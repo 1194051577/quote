@@ -1,46 +1,140 @@
 import requests
 import os
 import json
+import calendar
+import datetime
 
 import com.zhouww.easyMoney.DownloadCompanyInfo as dci
 
-def downloadKLineData(companyName, companyCode):
-    projectRootDir = os.path.dirname(os.path.realpath(__file__))
-    companyFile = projectRootDir + "/Company.json"
-    if os.path.exists(companyFile) == False:
-        dci.queryCompanyInfo("hushenAGu")
-    with open(companyFile, mode='r') as companyReadFile:
-        companyJsonStr = companyReadFile.read()
-    companyArr = json.loads(companyJsonStr)
-    for company in companyArr:
-        checkResult = True
-        if companyName:
-            checkResult = checkResult and companyName == company["companyName"]
-        if companyCode:
-            checkResult = checkResult and companyCode == company["companyCode"]
-        if checkResult:
-            companyInfo = company
-            break
+class KLine:
+    kLineType_Day = 'day'
+    kLineType_Week = 'week'
+    kLineType_Month = 'month'
+    kLineType_5 = '5 minutes'
+    kLineType_15 = '15 minutes'
+    kLineType_30 = '30 minutes'
+    kLineType_60 = '60 minutes'
 
-    companyCode = companyInfo["companyCode"]
-    companyName = companyInfo["companyName"]
-    kLinePrefix = companyInfo["kLinePrefix"]
+    kltMap = {
+        kLineType_Day : "101",
+        kLineType_Week : "102",
+        kLineType_Month : "103",
+        kLineType_5 : "5",
+        kLineType_15 : "15",
+        kLineType_30 : "30",
+        kLineType_60 : "60"
 
-    kLineUrl = "http://90.push2his.eastmoney.com/api/qt/stock/kline/get?cb=jQuery1124019286645481350484_1615024072347&secid=" + str(kLinePrefix) + "." + str(companyCode) + "&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=101&fqt=1&beg=0&end=20500101&smplmt=460&lmt=1000000&_=1615024072495"
-    kLineResult = projectRootDir + "/ResultKLine.json"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
-        "Referer": "http://www.sse.com.cn/"
     }
-    companyResponse = requests.get(kLineUrl, headers=headers)
-    companyResponseText = companyResponse.text
-    textStartIdx = companyResponseText.find("(")
-    textEndIdx = companyResponseText.rfind(")")
-    companyJson = companyResponseText[textStartIdx+1:textEndIdx]
-    with open(kLineResult, "w") as file:
-        file.write(companyJson)
+
+    def downloadYear(self, companyCode, kLineType="day", year="init"):
+        if "init" == year or len(str(year)) != 4:
+            now = datetime.datetime.now()
+            year = now.year
+
+        startDate = str(year) + "0101"
+        endDate = str(year) + "1231"
+        return self.downloadKLine(companyCode=companyCode, startDate=startDate, endDate=endDate, kLineType=kLineType)
+
+    def downloadMonth(self, companyCode, kLineType="day", yearMonth="init"):
+        if "init" == yearMonth or len(str(yearMonth)) != 6:
+            now = datetime.datetime.now()
+            year = now.year
+            month = now.month
+        else:
+            pYearMonth = datetime.datetime.strptime(yearMonth, "%Y%m")
+            year = pYearMonth.year
+            month = pYearMonth.month
+        dayRangeArr = calendar.monthrange(year, month)
+
+        startDate = datetime.datetime(year=year, month=month, day=1).strftime("%Y%m%d")
+        endDate = datetime.datetime(year=year, month=month, day=dayRangeArr[1]).strftime("%Y%m%d")
+        return self.downloadKLine(companyCode=companyCode, startDate=startDate, endDate=endDate, kLineType=kLineType)
+
+    def downloadDay(self, companyCode, kLineType="day", yearMonthDay = "init"):
+        if "init" == yearMonthDay or len(str(yearMonthDay)) != 8:
+            now = datetime.datetime.now()
+            yearMonthDay = now.strftime("%Y%m%d")
+
+        return self.downloadKLine(companyCode=companyCode, startDate=yearMonthDay, endDate=yearMonthDay, kLineType=kLineType)
+
+    def downloadDayRange(self, companyCode, startYearMonthDay, endYearMonthDay="init", kLineType="day"):
+        if "init" == startYearMonthDay or len(str(startYearMonthDay)) != 8:
+            now = datetime.datetime.now()
+            startYearMonthDay = now.strftime("%Y%m%d")
+
+        if "init" == endYearMonthDay or len(str(endYearMonthDay)) != 8:
+            now = datetime.datetime.now()
+            endYearMonthDay = now.strftime("%Y%m%d")
+        return self.downloadKLine(companyCode=companyCode, startDate=startYearMonthDay, endDate=endYearMonthDay, kLineType=kLineType)
 
 
-downloadKLineData(None, "300946")
+    def downloadKLine(self, companyCode, startDate, endDate, kLineType="day", resultFilePath="init", kLinePrefix="init"):
+        if "init" == kLinePrefix:
+            companyInfo = self.getCompany(None, companyCode)
+            kLinePrefix = companyInfo["kLinePrefix"]
+
+        if "init" == resultFilePath:
+            projectRootDir = os.path.dirname(os.path.realpath(__file__))
+            resultFilePath = projectRootDir + "/ResultKLine.json"
+
+        klt = self.kltMap[kLineType]
+
+        kLineUrl = "http://51.push2his.eastmoney.com/api/qt/stock/kline/get?cb=jQuery112401951851412976897_1615119901825&secid="  + str(kLinePrefix) + "." + str(companyCode) \
+                   +  "&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61&klt=" + str(klt) \
+                   + "&fqt=1&beg=" + startDate \
+                   + "&end=" + endDate \
+                   + "&smplmt=460&lmt=1000000&_=1615119901851"
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+            "Referer": "http://quote.eastmoney.com/"
+        }
+        companyResponse = requests.get(kLineUrl, headers=headers)
+        companyResponseText = companyResponse.text
+        textStartIdx = companyResponseText.find("(")
+        textEndIdx = companyResponseText.rfind(")")
+        companyJson = companyResponseText[textStartIdx+1:textEndIdx]
+        with open(resultFilePath, "w") as file:
+            file.write(companyJson)
+
+        return companyJson
+
+    # 获取上市公司信息
+    #           {
+    #             "companyCode" : companyCode,
+    #             "companyName" : companyName,
+    #             "kLinePrefix" : kLinePrefix
+    #         }
+    def getCompany(self,companyName, companyCode):
+        if companyName == None and companyCode == None:
+            return
+        companyArr = self.readCompanyInfo()
+        for company in companyArr:
+            if companyName:
+                checkName = companyName == company["companyName"]
+            else:
+                checkName = True
+            if companyCode:
+                checkCode = str(companyCode) == company["companyCode"]
+            else :
+                checkCode = True
+            if checkName and checkCode:
+                return company
+
+    def readCompanyInfo(self):
+        projectRootDir = os.path.dirname(os.path.realpath(__file__))
+        companyFile = projectRootDir + "/Company.json"
+        if os.path.exists(companyFile) == False:
+            dci.queryCompanyInfo("hushenAGu")
+        with open(companyFile, mode='r') as companyReadFile:
+            companyJsonStr = companyReadFile.read()
+        return json.loads(companyJsonStr)
+
+
+kline = KLine()
+# print(kline.downloadDay(companyCode="600460", yearMonthDay="20210203"))
+# print(kline.downloadMonth(companyCode="600460", yearMonth="202103"))
+# print(kline.downloadYear(companyCode="600460", year="2021"))
+print(kline.downloadDayRange(companyCode="600460", startYearMonthDay="20210205", endYearMonthDay="20210312"))
+
 
