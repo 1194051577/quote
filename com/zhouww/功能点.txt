@@ -1,0 +1,24 @@
+东方财富网：
+http://quote.eastmoney.com/
+
+
+上海证券交易所：
+http://www.sse.com.cn/assortment/stock/list/share/
+
+    查询上市公司信息
+    http://query.sse.com.cn/security/stock/getStockListData.do?&jsonCallBack=jsonpCallback98904&isPagination=true&stockCode=&csrcCode=&areaName=&stockType=1&pageHelp.cacheSize=1&pageHelp.beginPage=1&pageHelp.pageSize=5000&pageHelp.pageNo=1&_=1621605306576
+        接口需要Header
+        Referer:http://www.sse.com.cn/
+
+
+深证证券交易所：
+
+
+
+
+
+
+
+
+
+
